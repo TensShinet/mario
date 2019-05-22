@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <button id="id-btn" onclick="newPage()" data-index="0">加载新数据</button>
+    <div>
+        <canvas id="id-canvas" width="640" height="640">
+        
+        </canvas>
+    </div>
+
+    
+</body>
+<script src="http://0.0.0.0:8000/static/utilits.js"></script>
+<script>
+const colors = [
+    'white',
+    'gray',
+    'blue',
+    'black'
+]
+const newPage = () => {
+    let b = qs('#id-btn')
+    let index = b.dataset.index
+
+    // log(index)
+    index++
+    b.dataset.index = index
+    drawNes(index)
+} 
+
+const drawBlock = (xBlock, yBlock, blockBytes) => {
+    log('blockBytes.length', blockBytes.length)
+    let xInit = xBlock * 80
+    let yInit = yBlock * 80
+    let pixelWidth = 10
+    // 画像素
+    let canvas = document.getElementById("id-canvas");
+    let ctx = canvas.getContext("2d");
+    for(let i = 0; i < 8; i++) {
+        let p1 = blockBytes[i]
+        let p2 = blockBytes[i + 8]
+        // log(p2)
+        let yOffset = i * pixelWidth
+        let y = yOffset + yInit
+        for(let j = 0; j < 8; j++) {
+            let c1 = (p1 >> (7 - j)) & 0b00000001
+            let c2 = (p2 >> (7 - j)) & 0b00000001
+            let cIndex = (c1 << 1) + c2
+            // log('cIndex', cIndex)
+            let c = colors[cIndex]
+            // if(c == 'black') {
+            //     // log('c1, c2', c1, c2)
+            // }
+
+            let xOffset = j * pixelWidth
+            let x = xOffset + xInit
+            ctx.fillStyle = c
+            ctx.fillRect(x, y, x + pixelWidth, y + pixelWidth);
+        }
+    }
+
+} 
+const drawNes = (index) => {
+
+    let bytes = window.bytes
+    for (let i = 0; i < 8; i++) {
+        for(let j = 0; j < 8; j++) {
+            // block 
+            let blockOffset = (i * 8 + j) * 8
+            let realIndex = blockOffset + index * 1024
+            drawBlock(i, j, bytes.slice(realIndex, realIndex + 16))
+        }
+    }
+}
+const _main = function () {
+
+    let request = {
+        'url': 'm.nes',
+        // 请求二进制文件，一定要加上这个
+        'type': 'arraybuffer',
+    }
+    let p = ajax(request)
+    p.then(function (res) {
+        // res 是 二进制文件
+        // log('res', res[2])
+        // let newRes = res.slice(3)
+        // log('newRes', newRes)
+        let bytes = new Uint8Array(res.slice(0))
+        log('bytes', bytes)
+        window.bytes = bytes
+        drawNes(32)
+    })
+}
+
+const _test = () => {
+    // let a = 100
+
+    // let b = parseTo16Binary(100) 
+    // log(mergeBinary(b))
+    let canvas = document.getElementById("id-canvas");
+    log(canvas)
+    let ctx = canvas.getContext("2d");
+    log(ctx)
+    ctx.fillStyle = "#FF0000";
+    ctx.fillRect(0, 0, 150, 75);
+}
+
+_main()
+// _test()
+</script>
+</html>
